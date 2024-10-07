@@ -12,6 +12,13 @@
 
 ---
 
+![Triangle Loaded](triangleRender.gif)
+
+
+![Mesh Loaded](suzzaneRender.gif)
+
+---
+
 ## 説明
 
 1. **平面の定義:**
