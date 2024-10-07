@@ -38,6 +38,102 @@
 - 平面上の最も近い点を計算します。
 - その点が三角形の中にあるか、そうではない場合は最も近い辺の点を見つけます。
 
+```cpp
+   //....
+
+   int i_p1 = model.indices[i + 0];
+   int i_p2 = model.indices[i + 1];
+   int i_p3 = model.indices[i + 2];
+
+   const float* vertData = &model.verticesAndNormals[0];
+   glm::vec3 p1(vertData[6 * i_p1], vertData[6 * i_p1 + 1], vertData[6 * i_p1 + 2]);
+   glm::vec3 p2(vertData[6 * i_p2], vertData[6 * i_p2 + 1], vertData[6 * i_p2 + 2]);
+   glm::vec3 p3(vertData[6 * i_p3], vertData[6 * i_p3 + 1], vertData[6 * i_p3 + 2]);
+
+   // apply model TRS to the points
+   p1 = model.TRS * glm::vec4(p1, 0);
+   p2 = model.TRS * glm::vec4(p2, 0);
+   p3 = model.TRS * glm::vec4(p3, 0);
+
+   glm::vec3 v1 = p2 - p1;
+   glm::vec3 v2 = p3 - p1;
+
+   glm::vec3 planeNormal = glm::cross(v1, v2);
+   planeNormal = glm::normalize(planeNormal);
+
+   float distanceToPlane = glm::dot(planeNormal, (point - p1));
+   distanceToPlane *= -1;
+
+   glm::vec3 translationVector = planeNormal * distanceToPlane;
+   glm::vec3 closestPointOnThePlane = point + translationVector;
+
+   // closestPointOnThePlane is the projection on the plane defined by the 3 vertices
+   // now make sure the point is inside the triangle
+   glm::vec3 _p1 = p1 - closestPointOnThePlane;
+   glm::vec3 _p2 = p2 - closestPointOnThePlane;
+   glm::vec3 _p3 = p3 - closestPointOnThePlane;
+
+   glm::vec3 u = glm::cross(_p2, _p3);
+   glm::vec3 v = glm::cross(_p3, _p1);
+   glm::vec3 w = glm::cross(_p1, _p2);
+
+   float uvAngle = glm::dot(u, v);
+   float uwAngle = glm::dot(u, w);
+
+   // if any is negative the value is outside the triangle
+   // need to do a second projection
+   // find the projected point for each and see which one is closest
+
+   if (uvAngle < 0.0f || uwAngle < 0.0f)
+   {
+
+      // could extract to a function but keeping it here to vizualize the math better
+      glm::vec3 closestPointOnTheEdge1;
+      {
+         glm::vec3 edge = p2 - p1;
+         float t = glm::dot(closestPointOnThePlane - p1, edge) / glm::dot(edge, edge);
+         t = glm::clamp(t, 0.0f, 1.0f);
+         closestPointOnTheEdge1 = p1 + t * edge;
+      }
+
+      glm::vec3 closestPointOnTheEdge2;
+      {
+         glm::vec3 edge = p3 - p2;
+         float t = glm::dot(closestPointOnThePlane - p2, edge) / glm::dot(edge, edge);
+         t = glm::clamp(t, 0.0f, 1.0f);
+         closestPointOnTheEdge2 = p2 + t * edge;
+      }
+
+      glm::vec3 closestPointOnTheEdge3;
+      {
+         glm::vec3 edge = p1 - p3;
+         float t = glm::dot(closestPointOnThePlane - p3, edge) / glm::dot(edge, edge);
+         t = glm::clamp(t, 0.0f, 1.0f);
+         closestPointOnTheEdge3 = p3 + t * edge;
+      }
+
+      // Choose the closest of these points
+      float dist1 = glm::length(closestPointOnTheEdge1 - closestPointOnThePlane);
+      float dist2 = glm::length(closestPointOnTheEdge2 - closestPointOnThePlane);
+      float dist3 = glm::length(closestPointOnTheEdge3 - closestPointOnThePlane);
+
+      if (dist1 < dist2 && dist1 < dist3)
+      {
+         closestPointOnThePlane = closestPointOnTheEdge1;
+      }
+      else if (dist2 < dist3)
+      {
+         closestPointOnThePlane = closestPointOnTheEdge2;
+      }
+      else
+      {
+         closestPointOnThePlane = closestPointOnTheEdge3;
+      }
+   }     
+
+   //....
+```
+
 ---
 
 ## セットアップ

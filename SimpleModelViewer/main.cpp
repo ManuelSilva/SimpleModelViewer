@@ -283,6 +283,13 @@ namespace mySimpleModelViewer
 			glAttachShader(shaderProgram, vertexShader);
 			glAttachShader(shaderProgram, fragmentShader);
 			glLinkProgram(shaderProgram);
+			GLint linkStatus;
+			glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkStatus);
+			if (!linkStatus)
+			{
+				glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+				std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+			}
 
 			glDeleteShader(vertexShader);
 			glDeleteShader(fragmentShader);
@@ -381,15 +388,35 @@ namespace mySimpleModelViewer
 			int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 			glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 			glCompileShader(vertexShader);
+			GLint success;
+			GLchar infoLog[512];
+			glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+			if (!success)
+			{
+				glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+				std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+			}
 
 			int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 			glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
 			glCompileShader(fragmentShader);
+			if (!success)
+			{
+				glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+				std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+			}
 
 			shaderProgram = glCreateProgram();
 			glAttachShader(shaderProgram, vertexShader);
 			glAttachShader(shaderProgram, fragmentShader);
 			glLinkProgram(shaderProgram);
+			GLint linkStatus;
+			glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkStatus);
+			if (!linkStatus)
+			{
+				glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+				std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+			}
 
 			glDeleteShader(vertexShader);
 			glDeleteShader(fragmentShader);
@@ -501,6 +528,13 @@ namespace mySimpleModelViewer
 			glAttachShader(shaderProgram, vertexShader);
 			glAttachShader(shaderProgram, fragmentShader);
 			glLinkProgram(shaderProgram);
+			GLint linkStatus;
+			glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkStatus);
+			if (!linkStatus)
+			{
+				glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+				std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+			}
 
 			glDeleteShader(vertexShader);
 			glDeleteShader(fragmentShader);
@@ -621,7 +655,7 @@ namespace mySimpleModelViewer
 					uniform mat4 projection;
 
 					out vec3 FragPos;
-					out vec3 Normal;
+					flat out vec3 Normal; // needs to match fragment shader on the 3060
 
 					void main() {
 						FragPos = vec3(model * vec4(aPos, 1.0));
@@ -681,6 +715,13 @@ namespace mySimpleModelViewer
 			glAttachShader(shaderProgram, vertexShader);
 			glAttachShader(shaderProgram, fragmentShader);
 			glLinkProgram(shaderProgram);
+			GLint linkStatus;
+			glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkStatus);
+			if (!linkStatus)
+			{
+				glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+				std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+			}
 		}
 
 		void prepareBuffers()
@@ -729,8 +770,6 @@ namespace mySimpleModelViewer
 		void render(const Camera& camera)
 		{
 			glUseProgram(shaderProgram);
-
-			glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(camera.view));
 
 			glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(TRS));
 			glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(camera.view));
@@ -813,67 +852,65 @@ namespace mySimpleModelViewer
 
 			// closestPointOnThePlane is the projection on the plane defined by the 3 vertices
 			// now make sure the point is inside the triangle
+			glm::vec3 _p1 = p1 - closestPointOnThePlane;
+			glm::vec3 _p2 = p2 - closestPointOnThePlane;
+			glm::vec3 _p3 = p3 - closestPointOnThePlane;
+
+			glm::vec3 u = glm::cross(_p2, _p3);
+			glm::vec3 v = glm::cross(_p3, _p1);
+			glm::vec3 w = glm::cross(_p1, _p2);
+
+			float uvAngle = glm::dot(u, v);
+			float uwAngle = glm::dot(u, w);
+
+			// if any is negative the value is outside the triangle
+			// need to do a second projection
+			// find the projected point for each and see which one is closest
+
+			if (uvAngle < 0.0f || uwAngle < 0.0f)
 			{
-				glm::vec3 _p1 = p1 - closestPointOnThePlane;
-				glm::vec3 _p2 = p2 - closestPointOnThePlane;
-				glm::vec3 _p3 = p3 - closestPointOnThePlane;
 
-				glm::vec3 u = glm::cross(_p2, _p3);
-				glm::vec3 v = glm::cross(_p3, _p1);
-				glm::vec3 w = glm::cross(_p1, _p2);
-
-				float uvAngle = glm::dot(u, v);
-				float uwAngle = glm::dot(u, w);
-
-				// if any is negative the value is outside the triangle
-				// need to do a second projection
-				// find the projected point for each and see which one is closest
-
-				if (uvAngle < 0.0f || uwAngle < 0.0f)
+				// could extract to a function but keeping it here to vizualize the math better
+				glm::vec3 closestPointOnTheEdge1;
 				{
+					glm::vec3 edge = p2 - p1;
+					float t = glm::dot(closestPointOnThePlane - p1, edge) / glm::dot(edge, edge);
+					t = glm::clamp(t, 0.0f, 1.0f);
+					closestPointOnTheEdge1 = p1 + t * edge;
+				}
 
-					// could extract to a function but keeping it here to vizualize the math better
-					glm::vec3 closestPointOnTheEdge1;
-					{
-						glm::vec3 edge = p2 - p1;
-						float t = glm::dot(closestPointOnThePlane - p1, edge) / glm::dot(edge, edge);
-						t = glm::clamp(t, 0.0f, 1.0f);
-						closestPointOnTheEdge1 = p1 + t * edge;
-					}
+				glm::vec3 closestPointOnTheEdge2;
+				{
+					glm::vec3 edge = p3 - p2;
+					float t = glm::dot(closestPointOnThePlane - p2, edge) / glm::dot(edge, edge);
+					t = glm::clamp(t, 0.0f, 1.0f);
+					closestPointOnTheEdge2 = p2 + t * edge;
+				}
 
-					glm::vec3 closestPointOnTheEdge2;
-					{
-						glm::vec3 edge = p3 - p2;
-						float t = glm::dot(closestPointOnThePlane - p2, edge) / glm::dot(edge, edge);
-						t = glm::clamp(t, 0.0f, 1.0f);
-						closestPointOnTheEdge2 = p2 + t * edge;
-					}
+				glm::vec3 closestPointOnTheEdge3;
+				{
+					glm::vec3 edge = p1 - p3;
+					float t = glm::dot(closestPointOnThePlane - p3, edge) / glm::dot(edge, edge);
+					t = glm::clamp(t, 0.0f, 1.0f);
+					closestPointOnTheEdge3 = p3 + t * edge;
+				}
 
-					glm::vec3 closestPointOnTheEdge3;
-					{
-						glm::vec3 edge = p1 - p3;
-						float t = glm::dot(closestPointOnThePlane - p3, edge) / glm::dot(edge, edge);
-						t = glm::clamp(t, 0.0f, 1.0f);
-						closestPointOnTheEdge3 = p3 + t * edge;
-					}
+				// Choose the closest of these points
+				float dist1 = glm::length(closestPointOnTheEdge1 - closestPointOnThePlane);
+				float dist2 = glm::length(closestPointOnTheEdge2 - closestPointOnThePlane);
+				float dist3 = glm::length(closestPointOnTheEdge3 - closestPointOnThePlane);
 
-					// Choose the closest of these points
-					float dist1 = glm::length(closestPointOnTheEdge1 - closestPointOnThePlane);
-					float dist2 = glm::length(closestPointOnTheEdge2 - closestPointOnThePlane);
-					float dist3 = glm::length(closestPointOnTheEdge3 - closestPointOnThePlane);
-
-					if (dist1 < dist2 && dist1 < dist3)
-					{
-						closestPointOnThePlane = closestPointOnTheEdge1;
-					}
-					else if (dist2 < dist3)
-					{
-						closestPointOnThePlane = closestPointOnTheEdge2;
-					}
-					else
-					{
-						closestPointOnThePlane = closestPointOnTheEdge3;
-					}
+				if (dist1 < dist2 && dist1 < dist3)
+				{
+					closestPointOnThePlane = closestPointOnTheEdge1;
+				}
+				else if (dist2 < dist3)
+				{
+					closestPointOnThePlane = closestPointOnTheEdge2;
+				}
+				else
+				{
+					closestPointOnThePlane = closestPointOnTheEdge3;
 				}
 			}
 
