@@ -12,12 +12,12 @@
 
 ---
 
-![Triangle](img1.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
-![Suzzanne](img2.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
-![Suzzanne](img3.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
-![Triangle](img4.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
+[![Triangle](img1.png)](https://www.youtube.com/watch?v=AqKAE3duvCw)
+[![Triangle](img4.png)](https://www.youtube.com/watch?v=AqKAE3duvCw)
+[![Suzzanne](img2.png)](https://www.youtube.com/watch?v=AqKAE3duvCw)
+[![Suzzanne](img3.png)](https://www.youtube.com/watch?v=AqKAE3duvCw)
 
-[Video](https://www.youtube.com/watch?v=AqKAE3duvCw)
+[ビデオ　→　ここをクリックしてください](https://www.youtube.com/watch?v=AqKAE3duvCw)
 
 ---
 
