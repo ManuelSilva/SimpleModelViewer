@@ -105,7 +105,7 @@ namespace mySimpleModelViewer
 				return;
 			}
 
-			window = glfwCreateWindow(1200, 1000, "Simple Model Viewer", nullptr, nullptr);
+			window = glfwCreateWindow(800.0f*2, 600.0f*2, "Simple Model Viewer", nullptr, nullptr);
 			if (!window)
 			{
 				std::cerr << "Failed to create GLFW window" << std::endl;

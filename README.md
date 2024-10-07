@@ -12,10 +12,12 @@
 
 ---
 
-![Triangle Loaded](triangleRender.gif)
+![Triangle](img1.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
+![Suzzanne](img2.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
+![Suzzanne](img3.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
+![Triangle](img4.png)(https://www.youtube.com/watch?v=AqKAE3duvCw)
 
-
-![Mesh Loaded](suzzaneRender.gif)
+[Video](https://www.youtube.com/watch?v=AqKAE3duvCw)
 
 ---
 
@@ -167,5 +169,5 @@ vcpkg install glew glfw3 glm assimp imgui[core,glfw-binding,opengl3-binding] img
 
 ---
 
-マヌエル・コレイア・ネヴェス・トマス・ダ・シルバ  
+シルヴァ・マヌエル
 2024年
