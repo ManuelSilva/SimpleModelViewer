@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+*.tlog
+*.log
+*.pdb
+*.idb
+*.ilk
+/SimpleModelViewer/x64
+/SimpleModelViewer/.vs
+*.ini
+*.user
+*.filters
+*.vcxproj
+*.sln
